@@ -1,0 +1,17 @@
+# Render Blueprint — Docker deploy for Garment Pattern Maker V5
+# Connect this repo at https://dashboard.render.com/ then apply the blueprint,
+# or create a Web Service with runtime Docker and root Dockerfile.
+
+services:
+  - type: web
+    name: garment-pattern-maker
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:///garment.db
