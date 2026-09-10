@@ -11,7 +11,11 @@ export default function Measurements({project,size,setSize,save,upload,open,busy
  useEffect(()=>{onDirtyChange?.(dirty.length>0)},[dirty,onDirtyChange]);
  function edit(key:string,value:string){const next={...values,[key]:value};const keys=[...new Set([...dirty,key])];setValues(next);setDirty(keys);sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(keys.map(k=>[k,next[k]]))))}
  async function submit(){try{setError('');const changes=changedValues(values,dirty,unit);if(await save(changes)){sessionStorage.removeItem(draftKey);setDirty([])}}catch(e){setError((e as Error).message)}}
- function reset(){setValues(displayedValues(project,size,unit));setDirty([]);setError('');sessionStorage.removeItem(draftKey)}
+ function reset(){
+  setError('');sessionStorage.removeItem(draftKey);setDirty([]);
+  if(dirty.length)setValues(displayedValues(project,size,unit));
+  else setValues(Object.fromEntries(fields.map(([key])=>[key,''])));
+ }
  return <section className="measurement-panel card"><h2>Measurements</h2><p>Upload your measurement file or enter values manually</p><div className="tabs import-tabs"><button className={tab==='upload'?'selected':''} onClick={()=>setTab('upload')}><Upload size={18}/>Upload XLSX</button><button className={tab==='manual'?'selected':''} onClick={()=>setTab('manual')}><Pencil size={18}/>Manual Entry</button></div>
  {tab==='upload'&&<div className="dropzone" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(e.dataTransfer.files[0])upload(e.dataTransfer.files[0],replaceSource)}}><Upload/><strong>Drop your workbook or tech pack</strong><span>XLSX or PDF · up to 10 MB</span><label><input type="checkbox" checked={replaceSource} onChange={e=>setReplaceSource(e.target.checked)}/> Replace current source and retain its version</label><input aria-label="Upload source file" type="file" accept=".xlsx,.pdf" disabled={busy} onChange={e=>{if(e.target.files?.[0])upload(e.target.files[0],replaceSource)}}/>{project.documents.map(d=><small key={d.id}>{d.filename}</small>)}</div>}
  <label className="field-title" htmlFor="size-select">Size</label><div className="size-row"><select id="size-select" value={size} disabled={dirty.length>0} onChange={e=>setSize(e.target.value)}>{sizes.map(s=><option key={s} value={s}>{sizeLabels[s]||s}</option>)}</select><button className="link" onClick={open}>View all sizes</button></div>

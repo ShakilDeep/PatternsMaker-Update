@@ -22,7 +22,8 @@ from app.ports.ai_provider import AIProvider
 
 def create_app(database_url=None, *, ai_provider: AIProvider | None = None):
     app = FastAPI(title="Garment Pattern Maker V5", version="0.1.0")
-    repository = Repository(database_url or os.getenv("DATABASE_URL", "sqlite:///garment.db"))
+    db_url = database_url or os.getenv("DATABASE_URL") or "sqlite:///garment.db"
+    repository = Repository(db_url)
     service = Service(repository)
     app.include_router(router(service, ai_provider))
     app.include_router(artifact_routes(service), prefix='/api/v1')
