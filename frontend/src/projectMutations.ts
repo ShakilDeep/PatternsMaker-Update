@@ -85,6 +85,13 @@ export function projectMutations(ctx: Ctx) {
         await refresh(project.id);
       }, 'All six sizes generated from source measurements.');
     },
+    clearPattern: async () => {
+      if (!project) return;
+      await run(async () => {
+        await api(`/projects/${project.id}/patterns/clear`, 'POST');
+        await refresh(project.id);
+      }, 'Pattern preview cleared.');
+    },
     ...nestAndExport({project, size, refresh, run}),
   };
 }

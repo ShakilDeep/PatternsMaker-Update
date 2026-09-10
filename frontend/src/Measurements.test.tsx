@@ -72,4 +72,30 @@ describe('Measurements Reset', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Reset'}));
     expect(input.value).toBe('');
   });
+
+  it('resets unit display to cm', () => {
+    setup();
+    fireEvent.click(screen.getByRole('button', {name: 'inch'}));
+    expect(screen.getAllByText('inch').length).toBeGreaterThan(1);
+    fireEvent.click(screen.getByRole('button', {name: 'Reset'}));
+    expect(screen.getByRole('button', {name: 'cm'}).className).toMatch(/selected/);
+    expect(screen.getAllByText('cm').length).toBeGreaterThan(1);
+  });
+
+  it('clears the pattern preview when a generated pattern exists', () => {
+    const clearPattern = vi.fn(async () => {});
+    const p = projectWithChest(56);
+    p.pattern = {
+      id: 'pat', size: 'M', profile: 'demo_v1', pieces: [], validation: [], assumptions: [],
+      input_hash: 'x', stale: false, seam_allowance: 1,
+    };
+    render(
+      <Measurements
+        project={p} size="M" setSize={vi.fn()} save={vi.fn(async () => true)}
+        upload={vi.fn()} open={vi.fn()} busy={false} clearPattern={clearPattern}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Reset'}));
+    expect(clearPattern).toHaveBeenCalled();
+  });
 });
