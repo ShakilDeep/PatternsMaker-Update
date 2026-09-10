@@ -72,11 +72,12 @@ export function projectMutations(ctx: Ctx) {
     upload: async (file: File, replace = false) => {
       if (!project) return;
       if (file.size > 10_000_000) { ctx.setError('Maximum upload size is 10 MB'); return; }
+      const shouldReplace = replace || project.documents.length > 0;
       await run(async () => {
         const form = new FormData(); form.append('file', file);
-        await api(`/projects/${project.id}/documents${replace ? '?replace=true' : ''}`, 'POST', form);
+        await api(`/projects/${project.id}/documents${shouldReplace ? '?replace=true' : ''}`, 'POST', form);
         await refresh(project.id);
-      }, replace ? 'Source replaced. Review the retained version history.' : 'Document imported. Review extracted data and requirements.');
+      }, shouldReplace ? 'Source replaced. Review the retained version history.' : 'Document imported. Review extracted data and requirements.');
     },
     grade: async () => {
       if (!project) return;
@@ -91,6 +92,13 @@ export function projectMutations(ctx: Ctx) {
         await api(`/projects/${project.id}/patterns/clear`, 'POST');
         await refresh(project.id);
       }, 'Pattern preview cleared.');
+    },
+    clearSources: async () => {
+      if (!project) return;
+      await run(async () => {
+        await api(`/projects/${project.id}/sources/clear`, 'POST');
+        await refresh(project.id);
+      }, 'Imported sources and pattern preview cleared.');
     },
     ...nestAndExport({project, size, refresh, run}),
   };

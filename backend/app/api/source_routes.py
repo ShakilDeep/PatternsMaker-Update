@@ -63,6 +63,10 @@ def source_routes(service):
     def documents(pid: str):
         return repo.get(pid).get("documents", [])
 
+    @routes.post("/projects/{pid}/sources/clear", response_model=ObjectResponse)
+    def clear_sources(pid: str):
+        return service.clear_sources(repo.get(pid))
+
     @routes.get("/projects/{pid}/documents/compare", response_model=ObjectResponse)
     def compare_documents(pid: str):
         project = repo.get(pid)

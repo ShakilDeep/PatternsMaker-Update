@@ -11,7 +11,7 @@ from app.application.pattern_workflow import clear as clear_pattern
 from app.application.pattern_workflow import generate as generate_pattern
 from app.application.pattern_workflow import grade as grade_sizes
 from app.application.pattern_workflow import nest as nest_marker
-from app.application.state import transition
+from app.application.state import ALLOWED, transition
 from app.infrastructure.parsers import parse_pdf, parse_xlsx
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -95,6 +95,34 @@ class Service:
 
     def clear_pattern(self, p):
         return clear_pattern(self, p)
+
+    def clear_sources(self, p):
+        """Archive and remove imported sources so the same file can be imported again."""
+        self._ensure_active(p)
+        replaced_at = datetime.now(UTC).isoformat()
+        if p.get("measurements") or p.get("documents"):
+            p.setdefault("measurement_versions", []).append({
+                "documents": list(p.get("documents", [])),
+                "measurements": list(p.get("measurements", [])),
+                "replaced_at": replaced_at,
+            })
+        if p.get("techpack"):
+            p.setdefault("techpack_versions", []).append(p["techpack"])
+        p["measurements"] = []
+        p["documents"] = []
+        p["techpack"] = None
+        p["resolutions"] = {}
+        if p.get("pattern"):
+            p.setdefault("pattern_history", []).append(p["pattern"])
+        p["pattern"] = None
+        p["grades"] = []
+        p["marker"] = None
+        p["previous_marker"] = None
+        state = p.get("state", "CREATED")
+        if "NEEDS_INPUT" in ALLOWED.get(state, set()):
+            transition(p, "NEEDS_INPUT", "sources_cleared")
+        self.repo.save(p, "sources_cleared")
+        return p
 
     def grade(self, p, sizes, allowance=None):
         return grade_sizes(self, p, sizes, allowance)

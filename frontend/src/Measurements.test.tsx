@@ -1,4 +1,4 @@
-import {cleanup, fireEvent, render, screen} from '@testing-library/react';
+import {cleanup, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import Measurements from './Measurements';
 import type {Project} from './types';
@@ -65,25 +65,39 @@ describe('Measurements Reset', () => {
     expect(sessionStorage.getItem('measurement-draft:p1:M:cm')).toBeNull();
   });
 
-  it('clears fields when there are no unsaved edits', () => {
+  it('clears fields when there are no unsaved edits', async () => {
     setup();
     const input = screen.getByLabelText('Chest Circumference') as HTMLInputElement;
     expect(input.value).toBe('112.0');
     fireEvent.click(screen.getByRole('button', {name: 'Reset'}));
-    expect(input.value).toBe('');
+    await waitFor(() => expect(input.value).toBe(''));
   });
 
-  it('resets unit display to cm', () => {
+  it('resets unit display to cm', async () => {
     setup();
     fireEvent.click(screen.getByRole('button', {name: 'inch'}));
     expect(screen.getAllByText('inch').length).toBeGreaterThan(1);
     fireEvent.click(screen.getByRole('button', {name: 'Reset'}));
-    expect(screen.getByRole('button', {name: 'cm'}).className).toMatch(/selected/);
+    await waitFor(() => expect(screen.getByRole('button', {name: 'cm'}).className).toMatch(/selected/));
     expect(screen.getAllByText('cm').length).toBeGreaterThan(1);
   });
 
-  it('clears the pattern preview when a generated pattern exists', () => {
-    const clearPattern = vi.fn(async () => {});
+  it('clears imported sources so the same workbook can be re-imported', async () => {
+    const clearSources = vi.fn(async () => {});
+    const p = projectWithChest(56);
+    p.documents = [{id: 'd1', filename: 'Book2.xlsx', sha256: 'abc', bytes: 1, parser_version: 'xlsx_v2', imported_at: 't'}];
+    render(
+      <Measurements
+        project={p} size="M" setSize={vi.fn()} save={vi.fn(async () => true)}
+        upload={vi.fn()} open={vi.fn()} busy={false} clearSources={clearSources}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', {name: 'Reset'}));
+    await waitFor(() => expect(clearSources).toHaveBeenCalled());
+  });
+
+  it('clears the pattern preview when a generated pattern exists', async () => {
+    const clearSources = vi.fn(async () => {});
     const p = projectWithChest(56);
     p.pattern = {
       id: 'pat', size: 'M', profile: 'demo_v1', pieces: [], validation: [], assumptions: [],
@@ -92,10 +106,10 @@ describe('Measurements Reset', () => {
     render(
       <Measurements
         project={p} size="M" setSize={vi.fn()} save={vi.fn(async () => true)}
-        upload={vi.fn()} open={vi.fn()} busy={false} clearPattern={clearPattern}
+        upload={vi.fn()} open={vi.fn()} busy={false} clearSources={clearSources}
       />,
     );
     fireEvent.click(screen.getByRole('button', {name: 'Reset'}));
-    expect(clearPattern).toHaveBeenCalled();
+    await waitFor(() => expect(clearSources).toHaveBeenCalled());
   });
 });

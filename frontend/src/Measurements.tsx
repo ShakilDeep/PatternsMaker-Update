@@ -2,17 +2,23 @@ import {useEffect,useState} from 'react';
 import {Upload,Pencil} from 'lucide-react';
 import {fields,sizeLabels,sizes,type Project} from './types';
 import {displayedValues,changedValues} from './measurementDraft';
-type Props={project:Project;size:string;setSize:(s:string)=>void;save:(changes:Record<string,number>)=>Promise<boolean>;upload:(f:File,replace?:boolean)=>void;open:()=>void;busy:boolean;onDirtyChange?:(dirty:boolean)=>void;clearPattern?:()=>Promise<void>|void};
-export default function Measurements({project,size,setSize,save,upload,open,busy,onDirtyChange,clearPattern}:Props){
+type Props={project:Project;size:string;setSize:(s:string)=>void;save:(changes:Record<string,number>)=>Promise<boolean>;upload:(f:File,replace?:boolean)=>void;open:()=>void;busy:boolean;onDirtyChange?:(dirty:boolean)=>void;clearSources?:()=>Promise<void>|void};
+export default function Measurements({project,size,setSize,save,upload,open,busy,onDirtyChange,clearSources}:Props){
  const [tab,setTab]=useState('manual');const [replaceSource,setReplaceSource]=useState(false);const [unit,setUnit]=useState('cm');const [values,setValues]=useState<Record<string,string>>({});
  const [dirty,setDirty]=useState<string[]>([]);const [error,setError]=useState('');
  const draftKey=`measurement-draft:${project.id}:${size}:${unit}`;
  const clearedKey=`measurement-cleared:${project.id}:${size}`;
  useEffect(()=>{
-  if(sessionStorage.getItem(clearedKey)){
-   setValues(Object.fromEntries(fields.map(([key])=>[key,''])));
-   setDirty([]);
-   return;
+  const snap=sessionStorage.getItem(clearedKey);
+  if(snap){
+   const prev=JSON.parse(snap) as {docs:string;count:number};
+   const docs=project.documents.map(d=>d.id).join(',');
+   if(docs===prev.docs&&project.measurements.length===prev.count){
+    setValues(Object.fromEntries(fields.map(([key])=>[key,''])));
+    setDirty([]);
+    return;
+   }
+   sessionStorage.removeItem(clearedKey);
   }
   const stored=sessionStorage.getItem(draftKey);const restored=stored?JSON.parse(stored):{};
   setValues({...displayedValues(project,size,unit),...restored});setDirty(Object.keys(restored));
@@ -36,11 +42,14 @@ export default function Measurements({project,size,setSize,save,upload,open,busy
   if(hadEdits){
    sessionStorage.removeItem(clearedKey);
    setValues(displayedValues(project,size,'cm'));
-  }else{
-   sessionStorage.setItem(clearedKey,'1');
-   setValues(Object.fromEntries(fields.map(([key])=>[key,''])));
+   return;
   }
-  if(project.pattern||project.grades.length||project.marker)await clearPattern?.();
+  const snapshot={docs:project.documents.map(d=>d.id).join(','),count:project.measurements.length};
+  const hasSources=project.documents.length>0||project.measurements.length>0||Boolean(project.techpack)
+    ||Boolean(project.pattern)||project.grades.length>0||Boolean(project.marker);
+  if(hasSources&&clearSources)await clearSources();
+  sessionStorage.setItem(clearedKey,JSON.stringify(snapshot));
+  setValues(Object.fromEntries(fields.map(([key])=>[key,''])));
  }
  return <section className="measurement-panel card"><h2>Measurements</h2><p>Upload your measurement file or enter values manually</p><div className="tabs import-tabs"><button className={tab==='upload'?'selected':''} onClick={()=>setTab('upload')}><Upload size={18}/>Upload XLSX</button><button className={tab==='manual'?'selected':''} onClick={()=>setTab('manual')}><Pencil size={18}/>Manual Entry</button></div>
  {tab==='upload'&&<div className="dropzone" onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();if(e.dataTransfer.files[0])upload(e.dataTransfer.files[0],replaceSource)}}><Upload/><strong>Drop your workbook or tech pack</strong><span>XLSX or PDF · up to 10 MB</span><label><input type="checkbox" checked={replaceSource} onChange={e=>setReplaceSource(e.target.checked)}/> Replace current source and retain its version</label><input aria-label="Upload source file" type="file" accept=".xlsx,.pdf" disabled={busy} onChange={e=>{if(e.target.files?.[0])upload(e.target.files[0],replaceSource)}}/>{project.documents.map(d=><small key={d.id}>{d.filename}</small>)}</div>}
