@@ -23,6 +23,10 @@ def pattern_routes(service):
         check_operation(repo.get(pid), "generate", body.size)
         return service.generate(repo.get(pid), body.size, body.allowance)
 
+    @routes.post("/projects/{pid}/patterns/clear", response_model=ObjectResponse)
+    def clear(pid: str):
+        return service.clear_pattern(repo.get(pid))
+
     @routes.get("/projects/{pid}/patterns/{pattern_set_id}", response_model=ObjectResponse)
     def get_pattern(pid: str, pattern_set_id: str):
         return pattern_version(pid, pattern_set_id)

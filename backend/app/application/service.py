@@ -7,6 +7,7 @@ from app.application.errors import NotReady
 from app.application.measurement_edits import history as edit_history
 from app.application.measurement_edits import update_measurements as edit_measurements
 from app.application.pattern_workflow import build as build_pattern
+from app.application.pattern_workflow import clear as clear_pattern
 from app.application.pattern_workflow import generate as generate_pattern
 from app.application.pattern_workflow import grade as grade_sizes
 from app.application.pattern_workflow import nest as nest_marker
@@ -91,6 +92,9 @@ class Service:
 
     def generate(self, p, size, allowance=0):
         return generate_pattern(self, p, size, allowance)
+
+    def clear_pattern(self, p):
+        return clear_pattern(self, p)
 
     def grade(self, p, sizes, allowance=None):
         return grade_sizes(self, p, sizes, allowance)

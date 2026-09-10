@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from app.application.errors import NotReady
 from app.application.requirements import requirements
-from app.application.state import transition
+from app.application.state import ALLOWED, transition
 from app.domain.drafting import draft
 from app.infrastructure.geometry_adapter import apply_allowance, validate
 from app.infrastructure.marker import marker_batch
@@ -30,6 +30,21 @@ def build(p, size, allowance=0):
     if any(i["severity"] == "ERROR" for i in pattern["validation"]):
         raise ValueError("Generated geometry failed structural validation")
     return pattern
+
+
+def clear(service, p):
+    """Remove current pattern/grades/marker so the studio canvas is empty."""
+    service._ensure_active(p)
+    if p.get("pattern"):
+        p.setdefault("pattern_history", []).append(p["pattern"])
+    p["pattern"] = None
+    p["grades"] = []
+    p["marker"] = None
+    p["previous_marker"] = None
+    if "MEASUREMENTS_READY" in ALLOWED.get(p.get("state", "CREATED"), set()):
+        transition(p, "MEASUREMENTS_READY", "pattern_cleared")
+    service.repo.save(p, "pattern_cleared")
+    return p
 
 
 def generate(service, p, size, allowance=0):
