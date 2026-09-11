@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 COPY backend/ ./backend/
+COPY fixtures/demo_sources ./fixtures/demo_sources
 COPY --from=frontend /src/frontend/dist ./frontend/dist
 RUN python -m pip install --no-cache-dir -e "./backend"
 ENV DATABASE_URL=sqlite:///garment.db

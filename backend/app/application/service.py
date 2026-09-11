@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from hashlib import sha256
+from os import environ
 from pathlib import Path
 from uuid import uuid4
 
@@ -17,6 +18,22 @@ from app.infrastructure.parsers import parse_pdf, parse_xlsx
 ROOT = Path(__file__).resolve().parents[3]
 
 
+def demo_source_path(filename: str) -> Path:
+    """Resolve demo workbook/PDF from env, fixtures, or local references."""
+    candidates = []
+    env = Path(environ.get("DEMO_SOURCES_DIR", "") or "")
+    if env.as_posix():
+        candidates.append(env / filename)
+    candidates.append(ROOT / "fixtures" / "demo_sources" / filename)
+    candidates.append(ROOT / "references" / filename)
+    for path in candidates:
+        if path.is_file():
+            return path
+    raise FileNotFoundError(
+        f"Demo source {filename!r} is missing. Expected under fixtures/demo_sources or references."
+    )
+
+
 class Service:
     def __init__(self, repository):
         self.repo = repository
@@ -29,8 +46,8 @@ class Service:
             "state": "CREATED", "transitions": [], "undo": [], "redo": [],
         }
         if demo:
-            self.import_data(p, "Book2(4).xlsx", (ROOT / "references/Book2(4).xlsx").read_bytes())
-            self.import_data(p, "1078983(5).pdf", (ROOT / "references/1078983(5).pdf").read_bytes())
+            self.import_data(p, "Book2(4).xlsx", demo_source_path("Book2(4).xlsx").read_bytes())
+            self.import_data(p, "1078983(5).pdf", demo_source_path("1078983(5).pdf").read_bytes())
         return self.repo.save(p, "project_created")
 
     @staticmethod
