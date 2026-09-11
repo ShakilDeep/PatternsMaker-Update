@@ -19,18 +19,17 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 def demo_source_path(filename: str) -> Path:
-    """Resolve demo workbook/PDF from env, fixtures, or local references."""
+    """Resolve demo workbook/PDF from env or shipped fixtures only (never references/)."""
     candidates = []
     env = Path(environ.get("DEMO_SOURCES_DIR", "") or "")
-    if env.as_posix():
+    if str(env):
         candidates.append(env / filename)
     candidates.append(ROOT / "fixtures" / "demo_sources" / filename)
-    candidates.append(ROOT / "references" / filename)
     for path in candidates:
         if path.is_file():
             return path
     raise FileNotFoundError(
-        f"Demo source {filename!r} is missing. Expected under fixtures/demo_sources or references."
+        f"Demo source {filename!r} is missing. Expected under fixtures/demo_sources."
     )
 
 

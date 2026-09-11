@@ -3,6 +3,7 @@ import {api} from './api';
 import type {Project, Requirements} from './types';
 import {guardedGo} from './navigationGuard';
 import {projectMutations} from './projectMutations';
+import {bootProjectsDialog, shouldRestoreLastProject} from './startup';
 
 export type ProjectListItem = {id: string; name: string; archived?: boolean};
 
@@ -13,7 +14,7 @@ export function useAppController() {
   const [size, setSize] = useState('M');
   const [requirements, setRequirements] = useState<Requirements | null>(null);
   const [selected, select] = useState('');
-  const [dialog, setDialog] = useState('');
+  const [dialog, setDialog] = useState(bootProjectsDialog);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -45,10 +46,13 @@ export function useAppController() {
     api<ProjectListItem[]>('/projects').then(async (items) => {
       if (!active) return;
       setProjects(items);
-      const remembered = localStorage.getItem('garment-project');
-      const id = items.find((p) => p.id === remembered)?.id
-        || items.find((p) => !p.archived)?.id || items[0]?.id;
-      if (id) await refresh(id); else setDialog('projects');
+      if (shouldRestoreLastProject()) {
+        const remembered = localStorage.getItem('garment-project');
+        const id = items.find((p) => p.id === remembered)?.id
+          || items.find((p) => !p.archived)?.id || items[0]?.id;
+        if (id) { await refresh(id); return; }
+      }
+      setDialog(bootProjectsDialog());
     }).catch((e) => setError(e.message));
     return () => { active = false; };
   }, []);
