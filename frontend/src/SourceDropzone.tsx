@@ -10,7 +10,7 @@ type Props = {
   setReplaceSource: (v: boolean) => void;
 };
 
-/** Cross-browser dropzone: native file inputs are restyled poorly in Chrome. */
+/** Cross-browser dropzone: hide native file UI; Browse opens the picker in all browsers. */
 export default function SourceDropzone({upload, busy, documents, replaceSource, setReplaceSource}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -44,14 +44,19 @@ export default function SourceDropzone({upload, busy, documents, replaceSource, 
       <input
         ref={inputRef}
         id="source-upload"
-        className="sr-only"
+        className="sr-only file-picker"
         aria-label="Upload source file"
         type="file"
         accept=".xlsx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         disabled={busy}
         onChange={(e) => pick(e.target.files)}
       />
-      <button type="button" className="primary" disabled={busy} onClick={() => inputRef.current?.click()}>
+      <button
+        type="button"
+        className="primary"
+        disabled={busy}
+        onClick={() => inputRef.current?.click()}
+      >
         Browse files
       </button>
       {documents.map((d) => (
