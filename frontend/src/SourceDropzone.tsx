@@ -1,4 +1,4 @@
-import {useRef} from 'react';
+import {useId, useRef} from 'react';
 import {Upload} from 'lucide-react';
 
 type Doc = {id: string; filename: string};
@@ -11,12 +11,12 @@ type Props = {
 };
 
 /**
- * Cross-browser dropzone.
- * Native file inputs ignore tiny width/height and stay visible as "Choose File".
- * Use a <label htmlFor> Browse control + off-screen input (never pointer-events:none).
+ * Facade pattern: Browse label is the face; a transparent file input overlays it.
+ * Off-screen / clipped file inputs do not open the OS picker when activated via label.
  */
 export default function SourceDropzone({upload, busy, documents, replaceSource, setReplaceSource}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const inputId = useId();
 
   function pick(files: FileList | null) {
     const file = files?.[0];
@@ -45,24 +45,21 @@ export default function SourceDropzone({upload, busy, documents, replaceSource, 
         />
         Replace current source and retain its version
       </label>
-      <input
-        ref={inputRef}
-        id="source-upload"
-        className="sr-only"
-        type="file"
-        accept=".xlsx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        disabled={busy}
-        onChange={(e) => pick(e.target.files)}
-      />
       <label
-        htmlFor="source-upload"
         className={`primary browse-files${busy ? ' is-disabled' : ''}`}
         aria-disabled={busy || undefined}
-        onClick={(e) => {
-          if (busy) e.preventDefault();
-        }}
       >
-        Browse files
+        <span className="browse-files-label">Browse files</span>
+        <input
+          ref={inputRef}
+          id={inputId}
+          className="browse-files-input"
+          aria-label="Browse files"
+          type="file"
+          accept=".xlsx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          disabled={busy}
+          onChange={(e) => pick(e.target.files)}
+        />
       </label>
       {documents.map((d) => (
         <small key={d.id}>{d.filename}</small>

@@ -38,7 +38,7 @@ function projectWithChest(value: number): Project {
 }
 
 describe('Measurements upload browse', () => {
-  it('shows a Browse files label linked to a visually hidden file input', () => {
+  it('shows Facade Browse control with on-label file input', () => {
     render(
       <Measurements
         project={projectWithChest(56)}
@@ -53,7 +53,7 @@ describe('Measurements upload browse', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Upload XLSX'}));
     const input = screen.getByLabelText('Browse files') as HTMLInputElement;
     expect(input.type).toBe('file');
-    expect(input.className).toMatch(/sr-only/);
-    expect(document.querySelector('label[for="source-upload"]')?.textContent).toBe('Browse files');
+    expect(input.className).toMatch(/browse-files-input/);
+    expect(input.closest('label')?.className).toMatch(/browse-files/);
   });
 });

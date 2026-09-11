@@ -1,23 +1,30 @@
 ﻿---
-description: Source upload Browse control must use label+hidden file input
+description: Source upload Browse uses Facade pattern (input overlays label)
 globs: frontend/src/SourceDropzone.tsx,frontend/src/Measurements.tsx,frontend/src/**/*Dropzone*,frontend/src/styles.css
 alwaysApply: false
 ---
 
-# Source upload Browse control
+# Source upload Browse control (Facade)
 
-## Bug we already hit (2026-09-11)
+## Bugs already hit (2026-09-11)
 
-Native `<input type="file">` ignores tiny width/height. CSS that only sets `opacity:0` / `1px` still shows **"Choose File" / "No file chosen"**. Adding `pointer-events: none` makes that visible control (and programmatic `.click()`) dead.
+1. Visible native **Choose File** + `pointer-events: none` → dead clicks.
+2. Off-screen / `sr-only` / `clip:rect(0,0,0,0)` file input + `<label htmlFor>` → **Browse looks fine but OS picker never opens** (Chromium skips clipped/off-screen file inputs).
 
-## Required pattern
+## Required pattern: Facade
 
-1. Visually hide the file input with `.sr-only` and **off-screen** positioning (`left: -10000px`). Never use `pointer-events: none` on the file input.
-2. Expose **Browse files** as `<label htmlFor="source-upload">` (not a button that calls `input.click()`).
-3. Keep Measurements upload on `SourceDropzone` — do not reintroduce a bare native file control in the dropzone.
+The Browse control is a `<label class="browse-files">` that **contains** a transparent `<input type="file" class="browse-files-input">` stretched over the label (`position:absolute; inset:0; opacity:0`). The user click hits the real file input.
+
+```tsx
+<label className="primary browse-files">
+  <span className="browse-files-label">Browse files</span>
+  <input className="browse-files-input" type="file" aria-label="Browse files" />
+</label>
+```
 
 ## Do not
 
-- Rely on `.dropzone input { width: 100% }` or a visible native file picker in the dropzone
-- Use `pointer-events: none` on `input[type=file]` to "hide" it
-- Replace the label with a button + `ref.click()` without verifying every target browser
+- Park `input[type=file]` at `left: -10000px`, `clip: rect(0,0,0,0)`, or rely on `.sr-only` for the Browse control
+- Use `pointer-events: none` on an enabled file input
+- Use a `<button>` + `input.click()` as the only path without verifying the picker opens
+- Reintroduce a bare native file control in the Measurements dropzone
