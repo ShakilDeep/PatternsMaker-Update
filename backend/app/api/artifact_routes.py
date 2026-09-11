@@ -18,13 +18,17 @@ def artifact_routes(service):
 
     def response(project, kind, size=None):
         data, mime = export_artifact(project, kind, size=size)
-        export_size = size or project['pattern']['size']
+        export_size = size or (project.get('pattern') or {}).get('size') or (project.get('marker') or {}).get('size') or 'M'
         extension = {'marker-svg': 'svg', 'marker-pdf': 'pdf'}.get(kind, kind)
         metadata = {'id': str(uuid4()), 'kind': kind, 'size': export_size,
                     'sha256': sha256(data).hexdigest(), 'at': now()}
         project.setdefault('export_records', []).append(metadata)
-        transition(project, 'EXPORT_READY', 'export_created')
-        repo.save(project, 'export_created', metadata, artifact=(metadata, data))
+        # Best-effort state update — never block returning the artifact bytes.
+        try:
+            transition(project, 'EXPORT_READY', 'export_created')
+            repo.save(project, 'export_created', metadata, artifact=(metadata, data))
+        except ValueError:
+            repo.save(project, 'export_created', metadata, artifact=(metadata, data))
         return Response(data, media_type=mime, headers={
             'Content-Disposition': f'attachment; filename="1078983_shirt_{export_size}_demo.{extension}"'})
 

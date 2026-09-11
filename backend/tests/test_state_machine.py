@@ -31,3 +31,16 @@ def test_invalidation_can_return_to_needs_input():
     p = {'state': 'EXPORT_READY', 'transitions': []}
     transition(p, 'NEEDS_INPUT', 'measurement_changed')
     assert p['state'] == 'NEEDS_INPUT'
+
+
+def test_demo_complete_can_reexport_marker_artifacts():
+    """Marker download buttons call EXPORT_READY on every export."""
+    p = {'state': 'DEMO_COMPLETE', 'transitions': []}
+    transition(p, 'EXPORT_READY', 'export_created')
+    assert p['state'] == 'EXPORT_READY'
+
+
+def test_pattern_ready_can_nest_marker():
+    p = {'state': 'PATTERN_READY', 'transitions': []}
+    transition(p, 'MARKER_READY', 'marker_generated')
+    assert p['state'] == 'MARKER_READY'

@@ -64,9 +64,9 @@ export default function MarkerPanel({project: p, size, setSize, busy, nest, down
         <span>{p.marker.placements.length} pieces</span></div>
       <div className="actions" aria-label="Marker downloads">
         <button type="button" className="primary" disabled={busy || !download}
-          onClick={() => download?.('marker-svg')}>Download marker SVG</button>
+          onClick={() => { void download?.('marker-svg'); }}>Download marker SVG</button>
         <button type="button" disabled={busy || !download}
-          onClick={() => download?.('marker-pdf')}>Download marker PDF</button>
+          onClick={() => { void download?.('marker-pdf'); }}>Download marker PDF</button>
       </div>
       <svg className="marker-canvas" viewBox={`0 0 ${p.marker.width} ${p.marker.length}`} aria-label="Marker layout">
         <rect width={p.marker.width} height={p.marker.length} fill="var(--soft)"/>
