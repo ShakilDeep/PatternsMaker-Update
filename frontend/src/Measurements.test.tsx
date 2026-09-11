@@ -85,7 +85,7 @@ describe('Measurements Reset', () => {
   it('clears imported sources so the same workbook can be re-imported', async () => {
     const clearSources = vi.fn(async () => {});
     const p = projectWithChest(56);
-    p.documents = [{id: 'd1', filename: 'Book2.xlsx', sha256: 'abc', bytes: 1, parser_version: 'xlsx_v2', imported_at: 't'}];
+    p.documents = [{id: 'd1', filename: 'Book2.xlsx', sha256: 'abc', bytes: 1}];
     render(
       <Measurements
         project={p} size="M" setSize={vi.fn()} save={vi.fn(async () => true)}
