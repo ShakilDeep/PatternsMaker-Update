@@ -38,7 +38,7 @@ function projectWithChest(value: number): Project {
 }
 
 describe('Measurements upload browse', () => {
-  it('shows a Browse files control that opens the hidden file input', () => {
+  it('shows a Browse files label linked to a visually hidden file input', () => {
     render(
       <Measurements
         project={projectWithChest(56)}
@@ -51,10 +51,9 @@ describe('Measurements upload browse', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', {name: 'Upload XLSX'}));
-    const input = screen.getByLabelText('Upload source file') as HTMLInputElement;
+    const input = screen.getByLabelText('Browse files') as HTMLInputElement;
+    expect(input.type).toBe('file');
     expect(input.className).toMatch(/sr-only/);
-    const click = vi.spyOn(input, 'click');
-    fireEvent.click(screen.getByRole('button', {name: 'Browse files'}));
-    expect(click).toHaveBeenCalled();
+    expect(document.querySelector('label[for="source-upload"]')?.textContent).toBe('Browse files');
   });
 });

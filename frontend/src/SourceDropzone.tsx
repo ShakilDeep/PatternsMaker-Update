@@ -10,7 +10,11 @@ type Props = {
   setReplaceSource: (v: boolean) => void;
 };
 
-/** Cross-browser dropzone: hide native file UI; Browse opens the picker in all browsers. */
+/**
+ * Cross-browser dropzone.
+ * Native file inputs ignore tiny width/height and stay visible as "Choose File".
+ * Use a <label htmlFor> Browse control + off-screen input (never pointer-events:none).
+ */
 export default function SourceDropzone({upload, busy, documents, replaceSource, setReplaceSource}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -44,21 +48,22 @@ export default function SourceDropzone({upload, busy, documents, replaceSource, 
       <input
         ref={inputRef}
         id="source-upload"
-        className="sr-only file-picker"
-        aria-label="Upload source file"
+        className="sr-only"
         type="file"
         accept=".xlsx,.pdf,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         disabled={busy}
         onChange={(e) => pick(e.target.files)}
       />
-      <button
-        type="button"
-        className="primary"
-        disabled={busy}
-        onClick={() => inputRef.current?.click()}
+      <label
+        htmlFor="source-upload"
+        className={`primary browse-files${busy ? ' is-disabled' : ''}`}
+        aria-disabled={busy || undefined}
+        onClick={(e) => {
+          if (busy) e.preventDefault();
+        }}
       >
         Browse files
-      </button>
+      </label>
       {documents.map((d) => (
         <small key={d.id}>{d.filename}</small>
       ))}

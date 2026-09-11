@@ -1,0 +1,23 @@
+﻿---
+description: Source upload Browse control must use label+hidden file input
+globs: frontend/src/SourceDropzone.tsx,frontend/src/Measurements.tsx,frontend/src/**/*Dropzone*,frontend/src/styles.css
+alwaysApply: false
+---
+
+# Source upload Browse control
+
+## Bug we already hit (2026-09-11)
+
+Native `<input type="file">` ignores tiny width/height. CSS that only sets `opacity:0` / `1px` still shows **"Choose File" / "No file chosen"**. Adding `pointer-events: none` makes that visible control (and programmatic `.click()`) dead.
+
+## Required pattern
+
+1. Visually hide the file input with `.sr-only` and **off-screen** positioning (`left: -10000px`). Never use `pointer-events: none` on the file input.
+2. Expose **Browse files** as `<label htmlFor="source-upload">` (not a button that calls `input.click()`).
+3. Keep Measurements upload on `SourceDropzone` — do not reintroduce a bare native file control in the dropzone.
+
+## Do not
+
+- Rely on `.dropzone input { width: 100% }` or a visible native file picker in the dropzone
+- Use `pointer-events: none` on `input[type=file]` to "hide" it
+- Replace the label with a button + `ref.click()` without verifying every target browser
